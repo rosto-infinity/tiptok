@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
@@ -36,6 +36,15 @@ const secretKey = ref<string | null>(null)
 const confirmationCode = ref('')
 const recoveryCodes = ref<string[]>([])
 const copiedCodes = ref(false)
+
+const sanitizedQrCodeSvg = computed(() => {
+  if (!qrCodeSvg.value) return ''
+  const trimmed = qrCodeSvg.value.trim()
+  if (!trimmed.startsWith('<svg') || /<script|onload|onerror|javascript:/i.test(trimmed)) {
+    return ''
+  }
+  return trimmed
+})
 
 const handleUpdatePassword = async () => {
   passwordErrors.value = {}
@@ -203,7 +212,7 @@ const copyToClipboard = () => {
           1. Scannez ce code QR avec votre application (Google Authenticator, Authy, 1Password) :
         </p>
 
-        <div class="flex justify-center p-4 bg-white rounded-lg w-fit mx-auto border border-border" v-html="qrCodeSvg"></div>
+        <div class="flex justify-center p-4 bg-white rounded-lg w-fit mx-auto border border-border" v-html="sanitizedQrCodeSvg"></div>
 
         <div v-if="secretKey" class="text-center text-xs">
           <span class="text-text-muted">Clé manuelle :</span>

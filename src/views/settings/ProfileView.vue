@@ -4,7 +4,9 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import { userApi } from '@/api/user.api'
-import { Camera, Trash2, Loader2, Save, User, Mail, Phone } from 'lucide-vue-next'
+import CountryPhoneInput from '@/components/common/CountryPhoneInput.vue'
+import { countryCodes } from '@/constants/countryCodes'
+import { Camera, Trash2, Loader2, Save, User, Mail } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const toastStore = useToastStore()
@@ -12,10 +14,12 @@ const toastStore = useToastStore()
 const form = reactive({
   name: '',
   email: '',
-  phone: '',
   birth_date: '',
   birth_place: '',
 })
+
+const selectedDialCode = ref('+225')
+const phoneNumber = ref('')
 
 const isSavingProfile = ref(false)
 const isUploadingAvatar = ref(false)
@@ -28,9 +32,20 @@ onMounted(() => {
   if (authStore.user) {
     form.name = authStore.user.name
     form.email = authStore.user.email
-    form.phone = authStore.user.phone || ''
     form.birth_date = authStore.user.birth_date || ''
     form.birth_place = authStore.user.birth_place || ''
+
+    if (authStore.user.phone) {
+      const sortedCodes = [...countryCodes].sort((a, b) => b.dialCode.length - a.dialCode.length)
+      const matched = sortedCodes.find((c) => authStore.user!.phone!.startsWith(c.dialCode))
+      if (matched) {
+        selectedDialCode.value = matched.dialCode
+        phoneNumber.value = authStore.user.phone.slice(matched.dialCode.length)
+      } else {
+        selectedDialCode.value = '+225'
+        phoneNumber.value = authStore.user.phone
+      }
+    }
   }
 })
 
@@ -85,11 +100,16 @@ const handleSaveProfile = async () => {
   errors.value = {}
   isSavingProfile.value = true
 
+  const cleanedPhone = phoneNumber.value.trim()
+  const fullPhone = cleanedPhone
+    ? `${selectedDialCode.value}${cleanedPhone.replace(/\s+/g, '')}`
+    : null
+
   try {
     await userApi.updateProfile({
       name: form.name,
       email: form.email,
-      phone: form.phone ? form.phone : null,
+      phone: fullPhone,
       birth_date: form.birth_date ? form.birth_date : null,
       birth_place: form.birth_place ? form.birth_place : null,
     })
@@ -220,21 +240,17 @@ const handleSaveProfile = async () => {
           <p v-if="errors.email" class="mt-1 text-xs text-danger">{{ errors.email[0] }}</p>
         </div>
 
-        <!-- Téléphone -->
+        <!-- Téléphone avec drapeaux et recherche -->
         <div>
-          <label for="phone" class="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
-            Numéro de téléphone <span class="text-text-muted font-normal lowercase">(ex: +2250707070707)</span>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
+            Numéro de téléphone
           </label>
-          <div class="relative">
-            <Phone class="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              id="phone"
-              v-model="form.phone"
-              type="tel"
-              placeholder="+2250707070707"
-              class="w-full pl-9 pr-3.5 py-2.5 rounded-lg bg-background border border-border text-text-primary text-sm transition-colors focus:border-primary"
-            />
-          </div>
+          <CountryPhoneInput
+            v-model="phoneNumber"
+            v-model:dialCode="selectedDialCode"
+            placeholder="07 07 07 07 07"
+            :disabled="isSavingProfile"
+          />
           <p v-if="errors.phone" class="mt-1 text-xs text-danger">{{ errors.phone[0] }}</p>
         </div>
 
