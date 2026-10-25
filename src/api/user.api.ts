@@ -3,7 +3,7 @@ import type { User, UpdateProfilePayload, UpdatePasswordPayload } from '@/types/
 
 export const userApi = {
   async getProfile(): Promise<User> {
-    const res = await apiClient.get<{ data: User }>('/api/v1/user')
+    const res = await apiClient.get<{ data: User }>('/api/user')
     return res.data.data
   },
 
@@ -19,7 +19,7 @@ export const userApi = {
     const formData = new FormData()
     formData.append('avatar', file)
 
-    const res = await apiClient.post<{ data: User }>('/api/v1/user/avatar', formData, {
+    const res = await apiClient.post<{ data: User }>('/api/user/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -28,7 +28,7 @@ export const userApi = {
   },
 
   async deleteAvatar(): Promise<User> {
-    const res = await apiClient.delete<{ data: User }>('/api/v1/user/avatar')
+    const res = await apiClient.delete<{ data: User }>('/api/user/avatar')
     return res.data.data
   },
 }

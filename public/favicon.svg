@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 30 490 400" fill="none">
+  <!-- Corps architectural extérieur Vert Citron (Logo 2) -->
+  <polygon
+    points="289,47 489,49 489,139 417,142 416,309 240,411 113,336 111,246 40,284 43,190"
+    fill="#1FDF3C"
+  />
+  <!-- Ruban intérieur Noir 1 (T droit) -->
+  <polygon
+    points="364,77 460,77 460,111 388,113 388,291 250,373 249,345 363,278"
+    fill="#1B1B1B"
+  />
+  <!-- Ruban intérieur Noir 2 (Labyrinthe central imbriqué) -->
+  <polygon
+    points="310,77 334,77 334,262 249,312 248,196 222,208 219,395 195,382 195,196 281,147 281,263 309,249"
+    fill="#1B1B1B"
+  />
+  <!-- Ruban intérieur Noir 3 (T gauche) -->
+  <polygon
+    points="279,86 278,115 166,181 166,332 142,320 141,197 70,236 69,209"
+    fill="#1B1B1B"
+  />
+</svg>

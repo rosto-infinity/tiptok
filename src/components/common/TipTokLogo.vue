@@ -26,17 +26,17 @@ const textStyles = {
 
 <template>
   <div class="inline-flex items-center gap-3 select-none">
-    <!-- Icône officielle choisie par l'utilisateur à gauche (sans texte intégré) -->
+    <!-- Icône vectorielle SVG pure (infiniment nette, zéro pixel) à gauche -->
     <img
-      src="/tiptok-icon.png"
+      src="/icon.svg"
       alt="TipTok Icon"
       :class="[
         iconSizes[props.size],
-        'object-contain shrink-0 transition-transform duration-150 hover:scale-105',
+        'shrink-0 object-contain transition-transform duration-150 hover:scale-105',
       ]"
     />
 
-    <!-- Titre à droite de l'icône -->
+    <!-- Titre typographique à droite de l'icône -->
     <span
       v-if="props.showText"
       :class="[

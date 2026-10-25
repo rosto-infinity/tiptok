@@ -10,6 +10,8 @@ export interface RegisterPayload {
   name: string
   email: string
   phone?: string | null
+  birth_date?: string | null
+  birth_place?: string | null
   password: string
   password_confirmation: string
   device_name?: string

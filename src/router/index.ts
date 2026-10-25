@@ -7,10 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: () => {
-        const token = localStorage.getItem('tiptok_token')
-        return token ? '/dashboard' : '/register'
-      },
+      component: () => import('@/views/HomeView.vue'),
     },
     {
       path: '/login',

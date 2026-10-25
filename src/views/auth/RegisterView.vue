@@ -3,6 +3,7 @@ import { reactive, ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
+import { countryCodes } from '@/constants/countryCodes'
 import TipTokLogo from '@/components/common/TipTokLogo.vue'
 import {
   HelpCircle,
@@ -11,6 +12,7 @@ import {
   ChevronLeft,
   ChevronDown,
   Loader2,
+  MapPin,
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -20,7 +22,7 @@ const toastStore = useToastStore()
 // Mode d'inscription : 'email' ou 'phone'
 const signupMode = ref<'email' | 'phone'>('email')
 
-// Date de naissance (comme sur TikTok)
+// Date de naissance
 const birthMonth = ref('')
 const birthDay = ref('')
 const birthYear = ref('')
@@ -44,22 +46,15 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 90 }, (_, i) => String(currentYear - 13 - i))
 
-// Indicatifs pays pour le mode téléphone
-const countryCode = ref('+225')
-const countryOptions = [
-  { code: '+225', label: 'Côte d’Ivoire (+225)', flag: '🇨🇮' },
-  { code: '+33', label: 'France (+33)', flag: '🇫🇷' },
-  { code: '+1', label: 'États-Unis (+1)', flag: '🇺🇸' },
-  { code: '+221', label: 'Sénégal (+221)', flag: '🇸🇳' },
-  { code: '+237', label: 'Cameroun (+237)', flag: '🇨🇲' },
-  { code: '+229', label: 'Bénin (+229)', flag: '🇧🇯' },
-]
+// Indicatif pays sélectionné (Côte d'Ivoire par défaut, ou premier de la liste)
+const selectedDialCode = ref('+225')
 
-// Formulaire
+// Formulaire complet
 const form = reactive({
   name: '',
   email: '',
   phoneNumber: '',
+  birth_place: '',
   password: '',
   password_confirmation: '',
   optInNewsletter: true,
@@ -70,23 +65,17 @@ const showPasswordConfirm = ref(false)
 const errors = ref<Record<string, string[]>>({})
 const generalError = ref<string | null>(null)
 
-// Validation simple pour l'état du bouton "S'inscrire"
+// Validation
 const isFormValid = computed(() => {
+  const hasBasicInfo =
+    form.name.trim().length > 0 &&
+    form.password.length >= 8 &&
+    form.password === form.password_confirmation
+
   if (signupMode.value === 'email') {
-    return (
-      form.email.includes('@') &&
-      form.name.trim().length > 0 &&
-      form.password.length >= 8 &&
-      form.password === form.password_confirmation
-    )
+    return form.email.includes('@') && hasBasicInfo
   } else {
-    return (
-      form.phoneNumber.trim().length >= 6 &&
-      form.email.includes('@') &&
-      form.name.trim().length > 0 &&
-      form.password.length >= 8 &&
-      form.password === form.password_confirmation
-    )
+    return form.phoneNumber.trim().length >= 6 && form.email.includes('@') && hasBasicInfo
   }
 })
 
@@ -94,14 +83,24 @@ const handleSubmit = async () => {
   errors.value = {}
   generalError.value = null
 
-  // Construction du numéro international
-  const fullPhone = form.phoneNumber ? `${countryCode.value}${form.phoneNumber.replace(/^0+/, '')}` : undefined
+  // Formatage date de naissance (YYYY-MM-DD)
+  let formattedBirthDate: string | undefined = undefined
+  if (birthYear.value && birthMonth.value && birthDay.value) {
+    formattedBirthDate = `${birthYear.value}-${birthMonth.value}-${birthDay.value}`
+  }
+
+  // Formatage téléphone international
+  const fullPhone = form.phoneNumber
+    ? `${selectedDialCode.value}${form.phoneNumber.replace(/^0+/, '')}`
+    : undefined
 
   try {
     await authStore.register({
       name: form.name,
       email: form.email,
       phone: fullPhone,
+      birth_date: formattedBirthDate,
+      birth_place: form.birth_place.trim() || undefined,
       password: form.password,
       password_confirmation: form.password_confirmation,
     })
@@ -122,10 +121,10 @@ const handleSubmit = async () => {
 
 <template>
   <div class="min-h-screen flex flex-col bg-background text-text-primary">
-    <!-- Header style TikTok (Logo à gauche, Assistance à droite) -->
-    <header class="w-full h-16 border-b border-border px-6 sm:px-10 flex items-center justify-between">
-      <RouterLink to="/" class="flex items-center gap-2 hover:opacity-90 transition-opacity">
-        <TipTokLogo size="md" />
+    <!-- Header style TikTok (Logo avec icône à gauche et titre à droite) -->
+    <header class="w-full h-16 border-b border-border px-6 sm:px-10 flex items-center justify-between select-none">
+      <RouterLink to="/" class="flex items-center hover:opacity-90 transition-opacity">
+        <TipTokLogo size="sm" />
       </RouterLink>
 
       <a
@@ -140,12 +139,11 @@ const handleSubmit = async () => {
     <!-- Contenu Principal centré style TikTok -->
     <main class="flex-1 flex flex-col items-center justify-center px-4 py-8">
       <div class="w-full max-w-[420px]">
-        <!-- Titre principal -->
         <h1 class="text-3xl font-extrabold text-center text-text-primary tracking-tight mb-8">
           S'inscrire
         </h1>
 
-        <!-- Alerte erreur -->
+        <!-- Alerte erreur globale -->
         <div
           v-if="generalError"
           class="mb-6 p-3.5 rounded-lg bg-danger-bg border border-danger-border text-danger text-xs font-medium"
@@ -153,8 +151,8 @@ const handleSubmit = async () => {
           {{ generalError }}
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-5">
-          <!-- Section 1 : Date de naissance (comme sur TikTok) -->
+        <form @submit.prevent="handleSubmit" class="space-y-4.5">
+          <!-- 1. Date de naissance (comme sur TikTok) -->
           <div>
             <label class="block text-sm font-bold text-text-primary mb-2">
               Quelle est ta date de naissance ?
@@ -202,12 +200,31 @@ const handleSubmit = async () => {
                 <ChevronDown class="w-4 h-4 text-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
-            <p class="text-[11px] text-text-muted mt-2">
+            <p class="text-[11px] text-text-muted mt-1.5">
               Ta date de naissance ne sera pas affichée publiquement.
             </p>
           </div>
 
-          <!-- Section 2 : Bascule E-mail / Téléphone -->
+          <!-- 2. Lieu de naissance -->
+          <div>
+            <label class="block text-sm font-bold text-text-primary mb-2">
+              Lieu de naissance <span class="text-xs font-normal text-text-muted">(Ville / Pays)</span>
+            </label>
+            <div class="relative">
+              <MapPin class="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                v-model="form.birth_place"
+                type="text"
+                placeholder="Ex. Abidjan, Côte d'Ivoire"
+                class="w-full pl-9 pr-3.5 py-3 rounded-lg bg-surface border border-border text-text-primary placeholder:text-text-muted text-sm focus:border-primary transition-colors"
+              />
+            </div>
+            <p v-if="errors.birth_place" class="text-xs text-danger mt-1">
+              {{ errors.birth_place[0] }}
+            </p>
+          </div>
+
+          <!-- 3. Bascule E-mail / Téléphone (avec la liste complète countryCodes) -->
           <div>
             <div class="flex items-center justify-between mb-2">
               <span class="text-sm font-bold text-text-primary">
@@ -222,16 +239,20 @@ const handleSubmit = async () => {
               </button>
             </div>
 
-            <!-- Mode Téléphone : Sélecteur d'indicatif + Numéro -->
+            <!-- Mode Téléphone : Sélecteur des 28 pays + Numéro -->
             <div v-if="signupMode === 'phone'" class="space-y-2">
               <div class="flex gap-2">
-                <div class="relative w-36">
+                <div class="relative w-40">
                   <select
-                    v-model="countryCode"
-                    class="w-full appearance-none px-3 py-3 rounded-lg bg-surface border border-border text-text-primary text-sm focus:border-primary pr-7 cursor-pointer"
+                    v-model="selectedDialCode"
+                    class="w-full appearance-none px-3 py-3 rounded-lg bg-surface border border-border text-text-primary text-xs font-semibold focus:border-primary pr-7 cursor-pointer"
                   >
-                    <option v-for="c in countryOptions" :key="c.code" :value="c.code">
-                      {{ c.flag }} {{ c.code }}
+                    <option
+                      v-for="c in countryCodes"
+                      :key="c.code"
+                      :value="c.dialCode"
+                    >
+                      {{ c.flag }} {{ c.code }} ({{ c.dialCode }})
                     </option>
                   </select>
                   <ChevronDown class="w-4 h-4 text-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -247,7 +268,7 @@ const handleSubmit = async () => {
                 {{ errors.phone[0] }}
               </p>
 
-              <!-- Email obligatoire pour le compte backend -->
+              <!-- Email requis pour le compte -->
               <div>
                 <input
                   v-model="form.email"
@@ -278,7 +299,7 @@ const handleSubmit = async () => {
             </div>
           </div>
 
-          <!-- Section 3 : Nom / Pseudo de l'utilisateur -->
+          <!-- 4. Nom ou pseudo public -->
           <div>
             <label class="block text-sm font-bold text-text-primary mb-2">
               Nom ou pseudo public
@@ -288,7 +309,7 @@ const handleSubmit = async () => {
               type="text"
               required
               autocomplete="name"
-              placeholder="Ton pseudo ou nom"
+              placeholder="Ton pseudo ou nom complet"
               class="w-full px-3.5 py-3 rounded-lg bg-surface border border-border text-text-primary placeholder:text-text-muted text-sm focus:border-primary transition-colors"
             />
             <p v-if="errors.name" class="text-xs text-danger mt-1">
@@ -296,7 +317,7 @@ const handleSubmit = async () => {
             </p>
           </div>
 
-          <!-- Section 4 : Mot de passe avec bouton Afficher/Masquer -->
+          <!-- 5. Mot de passe avec toggle Afficher/Masquer -->
           <div>
             <label class="block text-sm font-bold text-text-primary mb-2">
               Mot de passe
@@ -325,7 +346,7 @@ const handleSubmit = async () => {
             </p>
           </div>
 
-          <!-- Confirmation du mot de passe -->
+          <!-- 6. Confirmation du mot de passe -->
           <div>
             <div class="relative">
               <input
@@ -347,7 +368,7 @@ const handleSubmit = async () => {
             </div>
           </div>
 
-          <!-- Case à cocher Newsletter / Mises à jour style TikTok -->
+          <!-- 7. Case à cocher Newsletter / Actualités -->
           <div class="flex items-start gap-2.5 pt-1">
             <input
               id="optIn"
@@ -360,7 +381,7 @@ const handleSubmit = async () => {
             </label>
           </div>
 
-          <!-- Bouton d'action principal (Suivant / S'inscrire) -->
+          <!-- 8. Bouton S'inscrire -->
           <button
             type="submit"
             :disabled="authStore.isLoading || !isFormValid"
@@ -370,7 +391,7 @@ const handleSubmit = async () => {
             <span v-else>S'inscrire</span>
           </button>
 
-          <!-- Bouton Retour -->
+          <!-- Lien Retour -->
           <div class="text-center pt-2">
             <RouterLink
               to="/login"
@@ -384,8 +405,8 @@ const handleSubmit = async () => {
       </div>
     </main>
 
-    <!-- Barre inférieure fixe / sticky style TikTok "Tu as déjà un compte ? Se connecter" -->
-    <footer class="w-full border-t border-border bg-surface py-5 px-4 text-center">
+    <!-- Pied de page fixe style TikTok -->
+    <footer class="w-full border-t border-border bg-surface py-5 px-4 text-center select-none">
       <p class="text-sm text-text-primary">
         Tu as déjà un compte ?
         <RouterLink

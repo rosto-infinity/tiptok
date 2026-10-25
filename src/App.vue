@@ -8,9 +8,9 @@ import ToastContainer from '@/components/common/ToastContainer.vue'
 const route = useRoute()
 const authStore = useAuthStore()
 
-// Masquer la navbar globale sur les pages d'authentification dédiées (register & login)
+// Masquer la navbar globale sur les pages dédiées (home feed, register, login, 2fa)
 const showGlobalNavbar = computed(() => {
-  return route.name !== 'register' && route.name !== 'login' && route.name !== 'two-factor-challenge'
+  return route.name !== 'register' && route.name !== 'login' && route.name !== 'two-factor-challenge' && route.name !== 'home'
 })
 
 onMounted(() => {

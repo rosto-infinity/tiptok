@@ -12,6 +12,8 @@ const form = reactive({
   name: '',
   email: '',
   phone: '',
+  birth_date: '',
+  birth_place: '',
 })
 
 const isSavingProfile = ref(false)
@@ -26,6 +28,8 @@ onMounted(() => {
     form.name = authStore.user.name
     form.email = authStore.user.email
     form.phone = authStore.user.phone || ''
+    form.birth_date = authStore.user.birth_date || ''
+    form.birth_place = authStore.user.birth_place || ''
   }
 })
 
@@ -83,6 +87,8 @@ const handleSaveProfile = async () => {
       name: form.name,
       email: form.email,
       phone: form.phone ? form.phone : null,
+      birth_date: form.birth_date ? form.birth_date : null,
+      birth_place: form.birth_place ? form.birth_place : null,
     })
 
     await authStore.fetchUser()
@@ -227,6 +233,35 @@ const handleSaveProfile = async () => {
             />
           </div>
           <p v-if="errors.phone" class="mt-1 text-xs text-danger">{{ errors.phone[0] }}</p>
+        </div>
+
+        <!-- Date de naissance -->
+        <div>
+          <label for="birth_date" class="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
+            Date de naissance
+          </label>
+          <input
+            id="birth_date"
+            v-model="form.birth_date"
+            type="date"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-background border border-border text-text-primary text-sm transition-colors focus:border-primary"
+          />
+          <p v-if="errors.birth_date" class="mt-1 text-xs text-danger">{{ errors.birth_date[0] }}</p>
+        </div>
+
+        <!-- Lieu de naissance -->
+        <div>
+          <label for="birth_place" class="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1.5">
+            Lieu de naissance
+          </label>
+          <input
+            id="birth_place"
+            v-model="form.birth_place"
+            type="text"
+            placeholder="Ex. Abidjan, Côte d'Ivoire"
+            class="w-full px-3.5 py-2.5 rounded-lg bg-background border border-border text-text-primary text-sm transition-colors focus:border-primary"
+          />
+          <p v-if="errors.birth_place" class="mt-1 text-xs text-danger">{{ errors.birth_place[0] }}</p>
         </div>
 
         <div class="pt-2">
