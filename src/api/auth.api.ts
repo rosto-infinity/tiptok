@@ -45,6 +45,10 @@ export const authApi = {
     return res.data
   },
 
+  async confirmPassword(password: string): Promise<void> {
+    await apiClient.post('/user/confirm-password', { password })
+  },
+
   async enableTwoFactor(): Promise<void> {
     await apiClient.post('/user/two-factor-authentication')
   },

@@ -31,4 +31,11 @@ export const userApi = {
     const res = await apiClient.delete<{ data: User }>('/api/user/avatar')
     return res.data.data
   },
+
+  async deleteAccount(password: string): Promise<{ message: string }> {
+    const res = await apiClient.delete<{ message: string }>('/api/user/account', {
+      data: { password },
+    })
+    return res.data
+  },
 }
