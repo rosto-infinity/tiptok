@@ -7,7 +7,7 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  name: string
+  name?: string
   email: string
   phone?: string | null
   birth_date?: string | null

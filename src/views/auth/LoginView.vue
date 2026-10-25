@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import TipTokLogo from '@/components/common/TipTokLogo.vue'
@@ -9,8 +10,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Mail,
-  Lock,
+
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -48,10 +48,10 @@ const handleSubmit = async () => {
 
     toastStore.success('Connexion réussie.')
     router.push('/dashboard')
-  } catch (err: any) {
-    if (err.response?.status === 422 && err.response.data?.errors) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 422 && err.response.data?.errors) {
       errors.value = err.response.data.errors
-    } else if (err.response?.data?.message) {
+    } else if (axios.isAxiosError(err) && err.response?.data?.message) {
       generalError.value = err.response.data.message
     } else {
       generalError.value = 'Impossible de se connecter au serveur (port 8006). Vérifiez vos identifiants.'

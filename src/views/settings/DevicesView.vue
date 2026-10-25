@@ -3,19 +3,18 @@ import { ref, onMounted } from 'vue'
 import { tokensApi } from '@/api/tokens.api'
 import { useToastStore } from '@/stores/toast.store'
 import type { UserToken } from '@/types/user'
-import { Smartphone, Laptop, Trash2, ShieldCheck, Loader2 } from 'lucide-vue-next'
+import { Smartphone, Laptop, Trash2, Loader2 } from 'lucide-vue-next'
 
 const toastStore = useToastStore()
 const tokens = ref<UserToken[]>([])
 const isLoading = ref(true)
 const isRevokingOther = ref(false)
 const revokingId = ref<number | null>(null)
-
 const fetchTokens = async () => {
   isLoading.value = true
   try {
     tokens.value = await tokensApi.listTokens()
-  } catch (err: any) {
+  } catch {
     toastStore.error('Erreur lors du chargement des sessions actives.')
   } finally {
     isLoading.value = false
@@ -34,7 +33,7 @@ const handleRevoke = async (tokenId: number) => {
     await tokensApi.revokeToken(tokenId)
     toastStore.success('Session révoquée avec succès.')
     tokens.value = tokens.value.filter((t) => t.id !== tokenId)
-  } catch (err: any) {
+  } catch {
     toastStore.error('Impossible de révoquer ce token.')
   } finally {
     revokingId.value = null
@@ -49,7 +48,7 @@ const handleRevokeOthers = async () => {
     await tokensApi.revokeOtherTokens()
     toastStore.success('Toutes les autres sessions ont été révoquées.')
     tokens.value = tokens.value.filter((t) => t.is_current)
-  } catch (err: any) {
+  } catch {
     toastStore.error('Erreur lors de la révocation des autres sessions.')
   } finally {
     isRevokingOther.value = false

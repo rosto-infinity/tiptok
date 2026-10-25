@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import { userApi } from '@/api/user.api'
 import { authApi } from '@/api/auth.api'
 import {
   ShieldCheck,
-  ShieldAlert,
   KeyRound,
   Lock,
   Loader2,
@@ -51,11 +51,12 @@ const handleUpdatePassword = async () => {
     passwordForm.current_password = ''
     passwordForm.password = ''
     passwordForm.password_confirmation = ''
-  } catch (err: any) {
-    if (err.response?.status === 422 && err.response.data?.errors) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 422 && err.response.data?.errors) {
       passwordErrors.value = err.response.data.errors
     } else {
-      toastStore.error(err.response?.data?.message || 'Erreur lors de la modification.')
+      const message = axios.isAxiosError(err) ? err.response?.data?.message : null
+      toastStore.error(message || 'Erreur lors de la modification.')
     }
   } finally {
     isSavingPassword.value = false
@@ -73,8 +74,9 @@ const handleStartEnableTwoFactor = async () => {
     qrCodeSvg.value = qrRes.svg
     secretKey.value = keyRes.secretKey
     toastStore.info('Scannez le QR Code avec votre application d’authentification.')
-  } catch (err: any) {
-    toastStore.error(err.response?.data?.message || 'Impossible d’activer la 2FA.')
+  } catch (err: unknown) {
+    const message = axios.isAxiosError(err) ? err.response?.data?.message : null
+    toastStore.error(message || 'Impossible d’activer la 2FA.')
   } finally {
     isEnablingTwoFactor.value = false
   }
@@ -93,7 +95,7 @@ const handleConfirmTwoFactor = async () => {
     secretKey.value = null
     confirmationCode.value = ''
     toastStore.success('Double authentification activée avec succès !')
-  } catch (err: any) {
+  } catch {
     toastStore.error('Code de validation incorrect. Veuillez vérifier.')
   } finally {
     isConfirmingTwoFactor.value = false
@@ -109,8 +111,9 @@ const handleDisableTwoFactor = async () => {
     await authStore.fetchUser()
     recoveryCodes.value = []
     toastStore.info('La double authentification a été désactivée.')
-  } catch (err: any) {
-    toastStore.error(err.response?.data?.message || 'Erreur lors de la désactivation.')
+  } catch (err: unknown) {
+    const message = axios.isAxiosError(err) ? err.response?.data?.message : null
+    toastStore.error(message || 'Erreur lors de la désactivation.')
   } finally {
     isDisablingTwoFactor.value = false
   }
@@ -120,7 +123,7 @@ const handleViewRecoveryCodes = async () => {
   try {
     const codes = await authApi.getTwoFactorRecoveryCodes()
     recoveryCodes.value = codes
-  } catch (err: any) {
+  } catch {
     toastStore.error('Impossible de charger les codes de secours.')
   }
 }
@@ -131,7 +134,7 @@ const handleRegenerateRecoveryCodes = async () => {
     const codes = await authApi.regenerateTwoFactorRecoveryCodes()
     recoveryCodes.value = codes
     toastStore.success('Nouveaux codes de secours générés.')
-  } catch (err: any) {
+  } catch {
     toastStore.error('Erreur lors de la génération.')
   }
 }

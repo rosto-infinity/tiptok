@@ -4,16 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { tokensApi } from '@/api/tokens.api'
 import type { UserToken } from '@/types/user'
-import {
-  ShieldCheck,
-  ShieldAlert,
-  Smartphone,
-  User as UserIcon,
-  ExternalLink,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-} from 'lucide-vue-next'
+import { ArrowRight } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const activeTokens = ref<UserToken[]>([])
@@ -22,14 +13,12 @@ const isLoadingTokens = ref(true)
 onMounted(async () => {
   try {
     activeTokens.value = await tokensApi.listTokens()
-  } catch (err) {
+  } catch {
     // Non blocking
   } finally {
     isLoadingTokens.value = false
   }
 })
-
-const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8006'
 </script>
 
 <template>
@@ -64,7 +53,7 @@ const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8006'
     </div>
 
     <!-- Grille des statuts réels du compte (Anti-Slop : données authentiques uniquement) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Statut 2FA -->
       <div class="p-5 rounded-xl bg-surface border border-border flex flex-col justify-between">
         <div>
@@ -118,30 +107,6 @@ const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8006'
           Consulter les appareils
           <ArrowRight class="w-3.5 h-3.5" />
         </RouterLink>
-      </div>
-
-      <!-- Statut API & Documentation -->
-      <div class="p-5 rounded-xl bg-surface border border-border flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Backend API (8006)</span>
-            <span class="text-[11px] font-mono text-primary bg-primary-subtle px-2 py-0.5 rounded border border-primary/20">
-              Actif
-            </span>
-          </div>
-          <p class="text-xs text-text-secondary leading-relaxed">
-            Consultez les spécifications OpenAPI Scramble générées directement par le backend Laravel.
-          </p>
-        </div>
-        <a
-          :href="`${backendUrl}/docs/api`"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
-        >
-          Ouvrir la doc API Scramble
-          <ExternalLink class="w-3.5 h-3.5" />
-        </a>
       </div>
     </div>
 

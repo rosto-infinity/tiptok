@@ -38,6 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (payload: LoginPayload) => {
     isLoading.value = true
     try {
+      try {
+        await authApi.getCsrfCookie()
+      } catch {
+        // Continue if csrf endpoint is skipped
+      }
+
       const response = await authApi.login(payload)
       if (response.two_factor) {
         pendingTwoFactor.value = true
@@ -54,6 +60,12 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (payload: RegisterPayload) => {
     isLoading.value = true
     try {
+      try {
+        await authApi.getCsrfCookie()
+      } catch {
+        // Continue if csrf endpoint is skipped
+      }
+
       const response = await authApi.register(payload)
       setAuthData(response.token, response.user)
       return response

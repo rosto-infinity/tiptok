@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import TipTokLogo from '@/components/common/TipTokLogo.vue'
@@ -26,11 +27,13 @@ const handleSubmit = async () => {
 
     toastStore.success('Authentification à double facteur validée.')
     router.push('/dashboard')
-  } catch (err: any) {
-    if (err.response?.status === 422) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 422) {
       generalError.value = 'Code invalide ou expiré. Veuillez réessayer.'
+    } else if (axios.isAxiosError(err) && err.response?.data?.message) {
+      generalError.value = err.response.data.message
     } else {
-      generalError.value = err.response?.data?.message || 'Erreur lors de la validation.'
+      generalError.value = 'Erreur lors de la validation.'
     }
   }
 }

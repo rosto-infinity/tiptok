@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
-import { countryCodes } from '@/constants/countryCodes'
 import TipTokLogo from '@/components/common/TipTokLogo.vue'
+import CountryPhoneInput from '@/components/common/CountryPhoneInput.vue'
 import {
   HelpCircle,
   Eye,
@@ -12,15 +13,14 @@ import {
   ChevronLeft,
   ChevronDown,
   Loader2,
-  MapPin,
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 
-// Mode d'inscription : 'email' ou 'phone'
-const signupMode = ref<'email' | 'phone'>('email')
+// Mode d'inscription : 'phone' par défaut (style TikTok) ou 'email'
+const signupMode = ref<'phone' | 'email'>('phone')
 
 // Date de naissance
 const birthMonth = ref('')
@@ -49,12 +49,10 @@ const years = Array.from({ length: 90 }, (_, i) => String(currentYear - 13 - i))
 // Indicatif pays sélectionné (Côte d'Ivoire par défaut, ou premier de la liste)
 const selectedDialCode = ref('+225')
 
-// Formulaire complet
+// Formulaire épuré style TikTok (sans pseudo ni lieu de naissance à l'inscription)
 const form = reactive({
-  name: '',
   email: '',
   phoneNumber: '',
-  birth_place: '',
   password: '',
   password_confirmation: '',
   optInNewsletter: true,
@@ -67,15 +65,13 @@ const generalError = ref<string | null>(null)
 
 // Validation
 const isFormValid = computed(() => {
-  const hasBasicInfo =
-    form.name.trim().length > 0 &&
-    form.password.length >= 8 &&
-    form.password === form.password_confirmation
+  const hasPassword =
+    form.password.length >= 8 && form.password === form.password_confirmation
 
   if (signupMode.value === 'email') {
-    return form.email.includes('@') && hasBasicInfo
+    return form.email.includes('@') && hasPassword
   } else {
-    return form.phoneNumber.trim().length >= 6 && form.email.includes('@') && hasBasicInfo
+    return form.phoneNumber.trim().length >= 6 && form.email.includes('@') && hasPassword
   }
 })
 
@@ -93,24 +89,21 @@ const handleSubmit = async () => {
   const fullPhone = form.phoneNumber
     ? `${selectedDialCode.value}${form.phoneNumber.replace(/^0+/, '')}`
     : undefined
-
   try {
     await authStore.register({
-      name: form.name,
+      name: form.email.split('@')[0],
       email: form.email,
       phone: fullPhone,
       birth_date: formattedBirthDate,
-      birth_place: form.birth_place.trim() || undefined,
       password: form.password,
       password_confirmation: form.password_confirmation,
     })
-
     toastStore.success('Compte TipTok créé avec succès ! Bienvenue.')
     router.push('/dashboard')
-  } catch (err: any) {
-    if (err.response?.status === 422 && err.response.data?.errors) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 422 && err.response.data?.errors) {
       errors.value = err.response.data.errors
-    } else if (err.response?.data?.message) {
+    } else if (axios.isAxiosError(err) && err.response?.data?.message) {
       generalError.value = err.response.data.message
     } else {
       generalError.value = 'Erreur lors de la création du compte. Vérifiez les informations saisies.'
@@ -205,70 +198,41 @@ const handleSubmit = async () => {
             </p>
           </div>
 
-          <!-- 2. Lieu de naissance -->
+          <!-- 2. Onglets Téléphone / E-mail style TikTok avec drapeau à côté du téléphone -->
           <div>
-            <label class="block text-sm font-bold text-text-primary mb-2">
-              Lieu de naissance <span class="text-xs font-normal text-text-muted">(Ville / Pays)</span>
-            </label>
-            <div class="relative">
-              <MapPin class="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                v-model="form.birth_place"
-                type="text"
-                placeholder="Ex. Abidjan, Côte d'Ivoire"
-                class="w-full pl-9 pr-3.5 py-3 rounded-lg bg-surface border border-border text-text-primary placeholder:text-text-muted text-sm focus:border-primary transition-colors"
-              />
-            </div>
-            <p v-if="errors.birth_place" class="text-xs text-danger mt-1">
-              {{ errors.birth_place[0] }}
-            </p>
-          </div>
-
-          <!-- 3. Bascule E-mail / Téléphone (avec la liste complète countryCodes) -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-bold text-text-primary">
-                {{ signupMode === 'email' ? 'E-mail' : 'Téléphone' }}
-              </span>
+            <div class="flex items-center gap-6 border-b border-border mb-3.5">
               <button
                 type="button"
-                @click="signupMode = signupMode === 'email' ? 'phone' : 'email'"
-                class="text-xs font-medium text-text-secondary hover:text-primary transition-colors cursor-pointer"
+                @click="signupMode = 'phone'"
+                class="pb-2 text-sm font-bold transition-all relative cursor-pointer"
+                :class="signupMode === 'phone' ? 'text-text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-primary'"
               >
-                {{ signupMode === 'email' ? 'Inscription par téléphone' : 'Inscription par e-mail' }}
+                Téléphone
+              </button>
+              <button
+                type="button"
+                @click="signupMode = 'email'"
+                class="pb-2 text-sm font-bold transition-all relative cursor-pointer"
+                :class="signupMode === 'email' ? 'text-text-primary border-b-2 border-primary' : 'text-text-muted hover:text-text-primary'"
+              >
+                E-mail
               </button>
             </div>
 
-            <!-- Mode Téléphone : Sélecteur des 28 pays + Numéro -->
-            <div v-if="signupMode === 'phone'" class="space-y-2">
-              <div class="flex gap-2">
-                <div class="relative w-40">
-                  <select
-                    v-model="selectedDialCode"
-                    class="w-full appearance-none px-3 py-3 rounded-lg bg-surface border border-border text-text-primary text-xs font-semibold focus:border-primary pr-7 cursor-pointer"
-                  >
-                    <option
-                      v-for="c in countryCodes"
-                      :key="c.code"
-                      :value="c.dialCode"
-                    >
-                      {{ c.flag }} {{ c.code }} ({{ c.dialCode }})
-                    </option>
-                  </select>
-                  <ChevronDown class="w-4 h-4 text-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-                <input
+            <!-- Mode Téléphone : Composant CountryPhoneInput avec drapeaux des pays et recherche -->
+            <div v-if="signupMode === 'phone'" class="space-y-3">
+              <div>
+                <CountryPhoneInput
                   v-model="form.phoneNumber"
-                  type="tel"
+                  v-model:dialCode="selectedDialCode"
                   placeholder="Numéro de téléphone"
-                  class="flex-1 px-3.5 py-3 rounded-lg bg-surface border border-border text-text-primary placeholder:text-text-muted text-sm focus:border-primary transition-colors"
                 />
+                <p v-if="errors.phone" class="text-xs text-danger mt-1">
+                  {{ errors.phone[0] }}
+                </p>
               </div>
-              <p v-if="errors.phone" class="text-xs text-danger">
-                {{ errors.phone[0] }}
-              </p>
 
-              <!-- Email requis pour le compte -->
+              <!-- Adresse email requise par le compte -->
               <div>
                 <input
                   v-model="form.email"
@@ -297,24 +261,6 @@ const handleSubmit = async () => {
                 {{ errors.email[0] }}
               </p>
             </div>
-          </div>
-
-          <!-- 4. Nom ou pseudo public -->
-          <div>
-            <label class="block text-sm font-bold text-text-primary mb-2">
-              Nom ou pseudo public
-            </label>
-            <input
-              v-model="form.name"
-              type="text"
-              required
-              autocomplete="name"
-              placeholder="Ton pseudo ou nom complet"
-              class="w-full px-3.5 py-3 rounded-lg bg-surface border border-border text-text-primary placeholder:text-text-muted text-sm focus:border-primary transition-colors"
-            />
-            <p v-if="errors.name" class="text-xs text-danger mt-1">
-              {{ errors.name[0] }}
-            </p>
           </div>
 
           <!-- 5. Mot de passe avec toggle Afficher/Masquer -->

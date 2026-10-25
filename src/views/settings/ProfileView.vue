@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import { userApi } from '@/api/user.api'
@@ -55,8 +56,9 @@ const handleUploadAvatar = async () => {
     avatarFile.value = null
     avatarPreview.value = null
     toastStore.success('Avatar mis à jour avec succès.')
-  } catch (err: any) {
-    toastStore.error(err.response?.data?.message || "Échec de l'upload de l'avatar.")
+  } catch (err: unknown) {
+    const message = axios.isAxiosError(err) ? err.response?.data?.message : null
+    toastStore.error(message || "Échec de l'upload de l'avatar.")
   } finally {
     isUploadingAvatar.value = false
   }
@@ -71,8 +73,9 @@ const handleDeleteAvatar = async () => {
     avatarFile.value = null
     avatarPreview.value = null
     toastStore.success('Avatar réinitialisé.')
-  } catch (err: any) {
-    toastStore.error(err.response?.data?.message || 'Impossible de supprimer cet avatar.')
+  } catch (err: unknown) {
+    const message = axios.isAxiosError(err) ? err.response?.data?.message : null
+    toastStore.error(message || 'Impossible de supprimer cet avatar.')
   } finally {
     isDeletingAvatar.value = false
   }
@@ -93,8 +96,8 @@ const handleSaveProfile = async () => {
 
     await authStore.fetchUser()
     toastStore.success('Profil mis à jour avec succès.')
-  } catch (err: any) {
-    if (err.response?.status === 422 && err.response.data?.errors) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 422 && err.response.data?.errors) {
       errors.value = err.response.data.errors
     } else {
       toastStore.error('Erreur lors de la mise à jour.')
