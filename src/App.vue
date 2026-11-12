@@ -8,9 +8,9 @@ import ToastContainer from '@/components/common/ToastContainer.vue'
 const route = useRoute()
 const authStore = useAuthStore()
 
-// Masquer la navbar globale sur les pages dédiées (home feed, register, login, 2fa)
+// Masquer uniquement sur l'accueil immersif (HomeView possède son propre HomeHeader + HomeSidebar)
 const showGlobalNavbar = computed(() => {
-  return route.name !== 'register' && route.name !== 'login' && route.name !== 'two-factor-challenge' && route.name !== 'home'
+  return route.name !== 'home'
 })
 
 onMounted(() => {
@@ -24,7 +24,7 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-background text-text-primary flex flex-col">
-    <!-- Navbar globale (affichée uniquement sur le dashboard et les paramètres) -->
+    <!-- Navbar globale (affichée sur login, register, 2fa, dashboard et paramètres) -->
     <AppNavbar v-if="showGlobalNavbar" />
 
     <!-- Vue de la page active -->

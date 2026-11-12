@@ -4,13 +4,10 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
-import TipTokLogo from '@/components/common/TipTokLogo.vue'
 import {
-  HelpCircle,
   Eye,
   EyeOff,
   Loader2,
-
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -64,23 +61,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-background text-text-primary">
-    <!-- Header style TikTok -->
-    <header class="w-full h-16 border-b border-border px-6 sm:px-10 flex items-center justify-between">
-      <RouterLink to="/" class="flex items-center gap-2 hover:opacity-90 transition-opacity">
-        <TipTokLogo size="md" />
-      </RouterLink>
-
-      <button
-        type="button"
-        class="text-xs sm:text-sm font-medium text-text-secondary hover:text-text-primary flex items-center gap-1.5 transition-colors"
-      >
-        <HelpCircle class="w-4 h-4" />
-        <span>Commentaires et assistance</span>
-      </button>
-    </header>
-
-    <!-- Contenu Principal centré style TikTok -->
+  <div class="flex-1 flex flex-col bg-background text-text-primary">
+    <!-- Contenu Principal centré style TikTok (AppNavbar & ToastContainer fournis par App.vue) -->
     <main class="flex-1 flex flex-col items-center justify-center px-4 py-8">
       <div class="w-full max-w-[420px]">
         <h1 class="text-3xl font-extrabold text-center text-text-primary tracking-tight mb-8">
