@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth.api'
@@ -5,13 +6,36 @@ import { userApi } from '@/api/user.api'
 import type { User } from '@/types/user'
 import type { LoginPayload, RegisterPayload, TwoFactorChallengePayload } from '@/types/auth'
 
+const parseStoredUser = (): User | null => {
+  const raw = localStorage.getItem('tiptok_user')
+  if (!raw) return null
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'id' in parsed &&
+      'name' in parsed &&
+      'email' in parsed &&
+      typeof (parsed as User).id === 'number' &&
+      typeof (parsed as User).name === 'string' &&
+      typeof (parsed as User).email === 'string'
+    ) {
+      return parsed as User
+    }
+  } catch {
+    // Corrupted JSON in localStorage
+  }
+
+  localStorage.removeItem('tiptok_user')
+  localStorage.removeItem('tiptok_token')
+  return null
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('tiptok_token'))
-  const user = ref<User | null>(
-    localStorage.getItem('tiptok_user')
-      ? JSON.parse(localStorage.getItem('tiptok_user') as string)
-      : null,
-  )
+  const user = ref<User | null>(parseStoredUser())
   const isLoading = ref<boolean>(false)
   const pendingTwoFactor = ref<boolean>(false)
 
@@ -67,7 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       const response = await authApi.register(payload)
-      setAuthData(response.token, response.user)
+      clearAuthData()
       return response
     } finally {
       isLoading.value = false
@@ -77,6 +101,12 @@ export const useAuthStore = defineStore('auth', () => {
   const twoFactorChallenge = async (payload: TwoFactorChallengePayload) => {
     isLoading.value = true
     try {
+      try {
+        await authApi.getCsrfCookie()
+      } catch {
+        // Continue if csrf cookie is already fresh
+      }
+
       const response = await authApi.twoFactorChallenge(payload)
       setAuthData(response.token, response.user)
       return response
@@ -89,6 +119,11 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
     try {
       if (token.value) {
+        try {
+          await authApi.getCsrfCookie()
+        } catch {
+          // Continue logout attempt
+        }
         await authApi.logout()
       }
     } catch {
@@ -107,7 +142,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('tiptok_user', JSON.stringify(profile))
       return profile
     } catch (err) {
-      clearAuthData()
+      if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+        clearAuthData()
+      }
       throw err
     }
   }

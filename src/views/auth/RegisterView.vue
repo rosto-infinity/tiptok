@@ -98,8 +98,8 @@ const handleSubmit = async () => {
       password: form.password,
       password_confirmation: form.password_confirmation,
     })
-    toastStore.success('Compte TipTok créé avec succès ! Bienvenue.')
-    router.push('/dashboard')
+    toastStore.success('Compte TipTok créé avec succès ! Veuillez vous connecter.')
+    router.push({ name: 'login', query: { registered: '1' } })
   } catch (err: unknown) {
     if (axios.isAxiosError(err) && err.response?.status === 422 && err.response.data?.errors) {
       errors.value = err.response.data.errors
@@ -120,13 +120,13 @@ const handleSubmit = async () => {
         <TipTokLogo size="sm" />
       </RouterLink>
 
-      <a
-        href="#"
+      <button
+        type="button"
         class="text-xs sm:text-sm font-medium text-text-secondary hover:text-text-primary flex items-center gap-1.5 transition-colors"
       >
         <HelpCircle class="w-4 h-4" />
         <span>Commentaires et assistance</span>
-      </a>
+      </button>
     </header>
 
     <!-- Contenu Principal centré style TikTok -->

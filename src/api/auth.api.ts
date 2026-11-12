@@ -23,11 +23,7 @@ export const authApi = {
   },
 
   async register(payload: RegisterPayload): Promise<AuthResponse> {
-    const defaultDeviceName = import.meta.env.VITE_DEVICE_NAME || 'TipTok Web App'
-    const res = await apiClient.post<AuthResponse>('/register', {
-      device_name: defaultDeviceName,
-      ...payload,
-    })
+    const res = await apiClient.post<AuthResponse>('/register', payload)
     return res.data
   },
 

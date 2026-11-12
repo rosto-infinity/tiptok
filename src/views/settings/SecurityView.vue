@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
 import { userApi } from '@/api/user.api'
 import { authApi } from '@/api/auth.api'
+import { sanitizeSvg } from '@/utils/sanitizeSvg'
 import {
   ShieldCheck,
   KeyRound,
@@ -62,11 +63,7 @@ const isDeletingAccount = ref(false)
 
 const sanitizedQrCodeSvg = computed(() => {
   if (!qrCodeSvg.value) return ''
-  const trimmed = qrCodeSvg.value.trim()
-  if (!trimmed.startsWith('<svg') || /<script|onload|onerror|javascript:/i.test(trimmed)) {
-    return ''
-  }
-  return trimmed
+  return sanitizeSvg(qrCodeSvg.value)
 })
 
 const requestAction = (action: 'enable' | 'disable' | 'show-codes') => {

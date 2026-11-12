@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
@@ -13,9 +13,12 @@ import {
 
 } from 'lucide-vue-next'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
+
+const isJustRegistered = computed(() => route.query.registered === '1')
 
 const form = reactive({
   email: '',
@@ -54,7 +57,7 @@ const handleSubmit = async () => {
     } else if (axios.isAxiosError(err) && err.response?.data?.message) {
       generalError.value = err.response.data.message
     } else {
-      generalError.value = 'Impossible de se connecter au serveur (port 8006). Vérifiez vos identifiants.'
+      generalError.value = 'Impossible de se connecter au serveur. Vérifiez vos identifiants.'
     }
   }
 }
@@ -68,13 +71,13 @@ const handleSubmit = async () => {
         <TipTokLogo size="md" />
       </RouterLink>
 
-      <a
-        href="#"
+      <button
+        type="button"
         class="text-xs sm:text-sm font-medium text-text-secondary hover:text-text-primary flex items-center gap-1.5 transition-colors"
       >
         <HelpCircle class="w-4 h-4" />
         <span>Commentaires et assistance</span>
-      </a>
+      </button>
     </header>
 
     <!-- Contenu Principal centré style TikTok -->
@@ -83,6 +86,14 @@ const handleSubmit = async () => {
         <h1 class="text-3xl font-extrabold text-center text-text-primary tracking-tight mb-8">
           Connexion
         </h1>
+
+        <!-- Alerte succès post-inscription -->
+        <div
+          v-if="isJustRegistered && !generalError"
+          class="mb-6 p-3.5 rounded-lg bg-success-bg border border-success-border text-success text-xs font-medium"
+        >
+          Votre compte a bien été créé. Veuillez vous connecter pour accéder à votre espace.
+        </div>
 
         <!-- Alerte erreur -->
         <div

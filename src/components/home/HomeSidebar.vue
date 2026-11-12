@@ -53,21 +53,21 @@ const popularTags = [
           <span>Pour toi</span>
         </RouterLink>
 
-        <a
-          href="#"
-          class="flex items-center gap-3.5 px-3 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+        <button
+          type="button"
+          class="w-full flex items-center gap-3.5 px-3 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors text-left"
         >
           <Compass class="w-5 h-5" />
           <span>Explorer</span>
-        </a>
+        </button>
 
-        <a
-          href="#"
-          class="flex items-center gap-3.5 px-3 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+        <button
+          type="button"
+          class="w-full flex items-center gap-3.5 px-3 py-2 rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors text-left"
         >
           <Users class="w-5 h-5" />
           <span>Abonnements</span>
-        </a>
+        </button>
 
         <RouterLink
           v-if="authStore.isAuthenticated"
@@ -132,9 +132,9 @@ const popularTags = [
     <!-- 5. Footer minimaliste -->
     <div class="text-[11px] text-text-muted space-y-1 pt-3 border-t border-border px-2">
       <div class="flex flex-wrap gap-x-3 gap-y-0.5">
-        <a href="#" class="hover:underline">À propos</a>
-        <a href="#" class="hover:underline">Aide</a>
-        <a href="#" class="hover:underline">Confidentialité</a>
+        <button type="button" class="hover:underline">À propos</button>
+        <button type="button" class="hover:underline">Aide</button>
+        <button type="button" class="hover:underline">Confidentialité</button>
       </div>
       <p class="text-[10px] text-text-muted">© 2026 TipTok</p>
     </div>

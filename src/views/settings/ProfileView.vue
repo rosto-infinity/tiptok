@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToastStore } from '@/stores/toast.store'
@@ -49,14 +49,34 @@ onMounted(() => {
   }
 })
 
+const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+const revokeAvatarPreview = () => {
+  if (avatarPreview.value) {
+    URL.revokeObjectURL(avatarPreview.value)
+    avatarPreview.value = null
+  }
+}
+
+onUnmounted(() => {
+  revokeAvatarPreview()
+})
+
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files && target.files[0]) {
     const file = target.files[0]
-    if (file.size > 2 * 1024 * 1024) {
-      toastStore.error("L'image ne doit pas dépasser 2 Mo.")
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.type)) {
+      toastStore.error('Format invalide. Seuls les fichiers JPG, PNG ou WEBP sont autorisés.')
+      target.value = ''
       return
     }
+    if (file.size > 2 * 1024 * 1024) {
+      toastStore.error("L'image ne doit pas dépasser 2 Mo.")
+      target.value = ''
+      return
+    }
+    revokeAvatarPreview()
     avatarFile.value = file
     avatarPreview.value = URL.createObjectURL(file)
   }
@@ -69,7 +89,7 @@ const handleUploadAvatar = async () => {
     const updatedUser = await userApi.uploadAvatar(avatarFile.value)
     authStore.setAuthData(null, updatedUser)
     avatarFile.value = null
-    avatarPreview.value = null
+    revokeAvatarPreview()
     toastStore.success('Avatar mis à jour avec succès.')
   } catch (err: unknown) {
     const message = axios.isAxiosError(err) ? err.response?.data?.message : null
@@ -86,7 +106,7 @@ const handleDeleteAvatar = async () => {
     const updatedUser = await userApi.deleteAvatar()
     authStore.setAuthData(null, updatedUser)
     avatarFile.value = null
-    avatarPreview.value = null
+    revokeAvatarPreview()
     toastStore.success('Avatar réinitialisé.')
   } catch (err: unknown) {
     const message = axios.isAxiosError(err) ? err.response?.data?.message : null

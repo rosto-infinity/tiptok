@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,7 @@ const router = createRouter({
       path: '/two-factor-challenge',
       name: 'two-factor-challenge',
       component: () => import('@/views/auth/TwoFactorView.vue'),
+      meta: { requiresPendingTwoFactor: true },
     },
     {
       path: '/dashboard',
@@ -57,13 +59,21 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('tiptok_token')
-  const isAuthenticated = !!token
+  const authStore = useAuthStore()
+  const isAuthenticated = authStore.isAuthenticated
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (to.meta.requiresPendingTwoFactor) {
+    if (isAuthenticated) {
+      next({ name: 'dashboard' })
+    } else if (!authStore.pendingTwoFactor) {
+      next({ name: 'login' })
+    } else {
+      next()
+    }
   } else {
     next()
   }
